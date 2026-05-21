@@ -1,11 +1,8 @@
 # Define root paths for dependency libraries
 set(SCSA_LIBRARY_DIR "${CMAKE_CURRENT_LIST_DIR}/CommSrc/library")
 
-# Register ScUtils CMake config path to prefix path
-list(APPEND CMAKE_PREFIX_PATH "${SCSA_LIBRARY_DIR}/GJS/lib/cmake/ScUtils")
-
-# Locate the required ScUtils package
-# find_package(ScUtils REQUIRED)
+# Register myself CMake config path to prefix path
+list(APPEND CMAKE_PREFIX_PATH "${SCSA_LIBRARY_DIR}/GJS/lib/cmake")
 
 # Append local custom cmake modules path
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/CommSrc/cmake")

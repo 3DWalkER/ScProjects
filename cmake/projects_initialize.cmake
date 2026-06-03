@@ -52,6 +52,8 @@ macro(sc_projects_add_target name target_type description src_dir)
     set_target_properties(${PROJECT_NAME} PROPERTIES 
         DESCRIPTION "${PROJECT_DESCRIPTION}"
     )
+	
+	sc_project_add_includes(${src_dir} PUBLIC)
 
     # Link dependencies if provided
     if(PROJECT_LIBS)

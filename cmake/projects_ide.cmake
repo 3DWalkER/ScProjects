@@ -27,5 +27,34 @@ function(sc_project_collect_files target_dir SC_PROJECT_HEADERS SC_PROJECT_SOURC
     endif()
 endfunction()
 
-function(sc_project_collect_dirs)
-endfunction()
+macro(sc_project_collect_dirs target_dir output_var)
+	set(${output_var} "")
+
+    file(GLOB_RECURSE _all_entries
+        LIST_DIRECTORIES true
+        RELATIVE ${target_dir}
+        ${target_dir}/*
+    )
+
+    foreach(_entry ${_all_entries})
+        set(_full_path ${target_dir}/${_entry})
+        if(IS_DIRECTORY ${_full_path})
+            list(APPEND ${output_var} ${_full_path})
+        endif()
+    endforeach()
+
+    if(${output_var})
+        list(REMOVE_DUPLICATES ${output_var})
+        list(SORT ${output_var})
+    endif()
+endmacro()
+
+macro(sc_project_add_includes target_dir scope)
+    sc_project_collect_dirs(${target_dir} include_dirs)
+
+    target_include_directories(${PROJECT_NAME}
+        ${scope}
+		${target_dir}
+		${include_dirs}
+    )
+endmacro()

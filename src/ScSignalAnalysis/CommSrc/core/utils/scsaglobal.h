@@ -71,16 +71,18 @@ enum ErrorCode
  */
 enum Status
 {
-	S_Start,          /**< 启动 */
-	S_Running,        /**< 运行中 */
-	S_Stop,           /**< 停止 */
-	S_Info,           /**< 信息 */
-	S_Progress,       /**< 进度 */
-	S_Error,          /**< 错误 */
-	S_Debug,          /**< 调试 */
-	S_Warn,           /**< 警告 */
-	S_Critical,       /**< 致命错误 */
-	S_Result          /**< 运行结果 */
+	S_Start,        /**< 启动 */
+	S_Starting,		/**< 启动中 */
+	S_Running,      /**< 运行中 */
+	S_Stoping,      /**< 停止中 */
+	S_Stop,         /**< 停止 */
+	S_Info,         /**< 信息 */
+	S_Progress,     /**< 进度 */
+	S_Error,        /**< 错误 */
+	S_Debug,        /**< 调试 */
+	S_Warn,         /**< 警告 */
+	S_Critical,     /**< 致命错误 */
+	S_Result        /**< 运行结果 */
 };
 
 /**
@@ -197,6 +199,14 @@ struct ScMetaData
 	int channelCount{ 1 };						/**< 通道数 */
 	double sampleRate{ 0.0 };					/**< 采样率 */
 	ScString name{ };							/**< 文件/设备名称 */
+};
+
+/**
+ * @brief The ScSaWorkParam struct 信号分析工作参数
+ */
+struct ScSaWorkParam
+{
+	ScMetaData meta;		/**< 信号源数据 */
 };
 
 /**

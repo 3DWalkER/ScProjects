@@ -71,7 +71,7 @@ bool ScRunnableManager::start(ScRunnablePtr runnable)
 		return false;
 	}
 
-	if (runnable->test(m_pService))
+	if (!runnable->test(m_pService))
 	{
 		sendStatus(runnable, Sc::S_Debug, "任务启动失败：服务配置不匹配，无法启动任务！");
 		return false;

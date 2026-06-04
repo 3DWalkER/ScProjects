@@ -180,6 +180,25 @@ public:
 	static T release(const usrid& id, size_t channel);
 };
 
+/**
+ * @brief CDRecyclablePool 可回收对象池
+ *        特点：对象被释放后不销毁，放入空闲队列复用，减少内存分配开销
+ * @tparam T 池化对象类型（必须继承自ScObject）
+ */
+template <typename T>
+class ScRecyclablePool : public ScObjectPool<T*>
+{
+	static_assert(std::is_base_of<ScObject, T>::value, "T must inherit from ScObject.");
+public:
+	template <typename... Args>
+	static T* acquire(const usrid& id, int channel, int subChannel, bool isExclusive, Args &&...args);
+	static void release(T* d);
+
+protected:
+	static std::mutex& freeMutex() { static std::mutex m; return m; }
+	static std::queue<T*>& freeQueue() { static std::queue<T*> q; return q; }
+};
+
 template<typename T>
 template <typename U, typename std::enable_if<!SC_DETAIL::is_unique_ptr<U>::value, int>::type>
 inline T ScObjectPool<T>::tryAcquire(ScObjects& objs, const ScUsrKey& key)
@@ -256,6 +275,73 @@ inline T ScExternalPool<T>::release(const usrid& id, size_t channel)
 	T ret = std::move(it->second);
 	b.objects.erase(it);
 	return ret;
+}
+
+template<typename T>
+template <typename... Args>
+inline T* ScRecyclablePool<T>::acquire(const usrid& id, int channel, int subChannel, bool isExclusive, Args &&...args)
+{
+	size_t proxyChannel = isExclusive ? size_t(ScChannelKey{ channel, subChannel }) : channel;
+	ScUsrKey key{ id, proxyChannel };
+	auto& b = bucket(key);
+	{
+		ScReadLocker locker(&b.rwlock);
+		T* obj = ScObjectPool<T*>::tryAcquire(b.objects, key);
+		if (obj)
+			return obj;
+	}
+
+	ScWriteLocker locker(&b.rwlock);
+	T* obj = ScObjectPool<T*>::tryAcquire(b.objects, key);
+	if (obj)
+		return obj;
+
+	{
+		std::lock_guard<std::mutex> lock(freeMutex());
+		if (!freeQueue().empty())
+		{
+			obj = freeQueue().front();
+			freeQueue().pop();
+		}
+		else
+		{
+			obj = new (std::nothrow) T(std::forward<Args>(args)...);
+			if (!obj)
+				return nullptr;
+		}
+	}
+
+	obj->ref.ref();
+	obj->id = id;
+	obj->channel = channel;
+	obj->proxyChannel = proxyChannel;
+	obj->reset();
+	b.objects[key] = obj;
+	return obj;
+}
+
+template<typename T>
+inline void ScRecyclablePool<T>::release(T* d)
+{
+	if (!d)
+		return;
+
+	bool shouldRecycle = false;
+	auto& b = bucket(d->id, d->proxyChannel);
+	{
+		ScWriteLocker locker(&b.rwlock);
+		if (!d->ref.deref())
+		{
+			b.objects.erase({ d->id, d->proxyChannel });
+			shouldRecycle = true;
+		}
+	}
+	
+	if (shouldRecycle)
+	{
+		std::lock_guard<std::mutex> lock(freeMutex());
+		freeQueue().push(d);
+	}
 }
 
 #endif // SCOBJECTPOOL_H

@@ -127,4 +127,10 @@ inline void ScSignalFormat::calibrateMetaData(ScMetaData& metaData) const
 		metaData.channelCount = m_channelCount;
 }
 
+template <typename Parser, typename Header>
+struct ScParserCreator
+{
+	static ScSignalFormat* create() { return new Parser(); }
+};
+
 #endif // SCSIGNALPARSER_H

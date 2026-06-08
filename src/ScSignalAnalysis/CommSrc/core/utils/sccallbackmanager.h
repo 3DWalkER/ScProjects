@@ -72,7 +72,7 @@ private:
 	SC_DISABLE_COPY_MOVE(ScCallbackManager)
 };
 
-#define Sc_CALLBACK ScCallbackManager::instance()
+#define SC_CALLBACK ScCallbackManager::instance()
 
 SC_BEGIN_NAMESPACE
 

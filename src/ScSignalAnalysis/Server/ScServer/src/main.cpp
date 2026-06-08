@@ -1,12 +1,29 @@
 ﻿#include "scplaybackrunnable.h"
 #include "scchannelreader.h"
+#include "scsignaldatamanager.h"
 
 static void testRunnables();
 static void testChannelReader();
+static void testDataManager();
 
 int main(int argc, char* argv[])
 {
-	testChannelReader();
+	testDataManager();
+}
+
+void testDataManager()
+{
+	ScLocalDataManager mgr(R"(I:\Sample\卫星通信\多普勒\VSR\003\CE04n003tSsBJ12r00c01-25287033800.prd)");
+	mgr.open();
+	size_t size = mgr.fileSize();
+	std::vector<char> data(1048576);
+	while (!mgr.isAtEnd())
+	{
+		int length = mgr.readRawChars(data.data(), data.size());
+		if (length <= 0)
+			break;
+	}
+	mgr.close();
 }
 
 void testChannelReader()
@@ -20,6 +37,7 @@ void testChannelReader()
 		if (!fp)
 			return;
 
+		size_t progress = 0;
 		std::vector<char> data(1048576);
 		while (0 == feof(fp))
 		{
@@ -28,6 +46,9 @@ void testChannelReader()
 				break;
 
 			reader->write(data.data(), length, feof(fp));
+
+			progress += length;
+			fprintf(stdout, "读取中：%lld\r\n", progress);
 		}
 
 		fclose(fp);

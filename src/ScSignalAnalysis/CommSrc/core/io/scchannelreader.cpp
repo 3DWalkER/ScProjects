@@ -454,7 +454,10 @@ size_t ScChannelReader::write(const char* pBuff, const size_t inlen, bool isEnd)
 		}
 
 		if (isEnd)
+		{
+			d->isAtEnd = true;
 			d->pushEndIndex(d->writeIdx);
+		}
 		d->totalWriteBytes.fetchAndAddRelease(inlen);
 	}
 	d->dataAvailableCv.notify_all();
